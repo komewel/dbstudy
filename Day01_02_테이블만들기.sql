@@ -23,15 +23,26 @@
                 (4) NUMBER(2,2) : 1미만의 소수부 2자리인 실수(EX, 0.15) - 정수부의 0 은 유효 자리가 아님 소수부 뒤에 0을 붙여도 비슷한 개념 
 */
 
+/*
+    제약 조건(Constraint)( ";" 이게 나오기전까지는 쿼리문이 끝난게 아니므로 조건을 걸때는 띄어쓰기나 줄바꿈 다 상관없이 정리중요)
+    1. 널 
+        1) NULL 또는 생략
+        2) NOT NULL
+    2. 중복 데이터(값) 방지
+        UNIQUE(특별하다, 동일한 데이터가 입력될수 없다)
+    3. 값의 제한(가격이 마이너스거나 말도안되는 상황을 제한해준다)
+        CHECK 
+    5개 중 3개 설명     
+*/
 
--- 예시 테이블(자바 이클립스랑 다르게 타입선언 이름이 아니라 반대이다 이름 타입선언)
+-- 예시 테이블(자바 이클립스랑 다르게 타입선언 이름이 아니라 반대이다 이름 타입선언, SQL은 소문자만 쓸거면 소문자만 아님 대문자만 이렇게 자기가 정한 규칙을 정해서 하나로만 작성해야한다.)
 DROP TABLE PRODUCT;      --이렇게 바로 위에 지우는 코드 짜주면 편하다
 CREATE TABLE PRODUCT(    --쿼리, 이거 하나를 1개의 쿼리라고 부른다
-    CODE            VARCHAR2(2 BYTE)  NOT NULL, -- NULL값이 아니다라고 설정해줘야한다, 필수 제약 조건 
-    MODEL           VARCHAR2(10 BYTE),  
-    CATRGORY        VARCHAR2(5 BYTE),
-    PRICE           NUMBER,
-    AMOUNT          NUMBER(2),
+    CODE            VARCHAR2(2 BYTE)    NOT NULL UNIQUE, -- NULL값이 아니다라고 설정해줘야한다(값을 비워두지 말아라), 필수 제약 조건 
+    MODEL           VARCHAR2(10 BYTE)   NULL,  
+    CATRGORY        VARCHAR2(5 BYTE)    CHECK(CATEGORY = 'MAIN' OR CATEGORY = 'SUB'),  --CATEGORY값이 MAIN 과 SUB 밖에 없다는 가정하에 값입력은 이렇게 한다, CHECK(CATEGORY IN('MAIN','SUB'))이렇게 대체가능 (추천)
+    PRICE           NUMBER              CHECK(PRICE >= 0),
+    AMOUNT          NUMBER(2)           CHECK(AMOUNT >= 0 AND AMOUNT <= 100),  -- CHECK(AMOUNT BETWEEN 0 AND 100) 이렇게 대체 가능 (추천)
     MANUFACTURED    DATE
 );    
     
