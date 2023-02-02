@@ -4,8 +4,8 @@
     2. 데이터를 보관하는 객체이다.
     3. 표 형식으로 데이터를 보관한다.
     4. 테이블 기본 용어
-        1) 열 : column,        속성(attribute),         필드(field) 
-        2) 행 :    row,    개체(=객체, entify),      레코드(record)
+        1) 열 :  column,        속성(attribute),         필드(field) 
+        2) 행 :     row,    개체(=객체, entity),      레코드(record)
 */
 
 /*
