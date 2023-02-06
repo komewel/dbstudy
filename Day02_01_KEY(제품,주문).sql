@@ -18,6 +18,20 @@
         2) 삭제 규칙 : "반드시" 자식 테이블을 먼저 삭제한다.    
 */
 
+/*
+    외래키 제약 조건의 옵션
+    1. ON DELETE CASCADE 
+        1) 참조 중인 PARENT KEY가 삭제되면 해당 PARENT KEY를 가진 행 전체를 함께 삭제한다
+        2) 예시) 회원 탈퇴 시 작성한 모든 게시글이 함께 삭제됩니다.(CASCADE옵션)
+            게시글 삭제 시 해당 게시글에 달린 모든 댓글이 함께 삭제됩니다.
+    2. ON DELETE SET NULL(PK의 NOT NULL 처리 해놓고 FK에 ON DELETE SET NULL로 설정하면 안된다 PK가 사라지면 NULL처리해라 라는 의미인데 NOT NULL 설정하고 삭제되면 NULL값을 주라는건 말이 안되기 때문)
+        1) 참조 중인 PARENT KEY가 삭제되면 해당 PARENT KEY를 가진 칼럼 값만 NULL로 처리한다.
+        2) 예시) 어떤 상품을 제거하였으나 해당 상품의 주문 내역은 남아 있는 경우(상품이 없어졌다고 해서 그동안 주문내역까지 다 지울 필요는 없다, 유연하게 데이터관리가 가능하다)
+    
+        
+*/
+
+
 --테이블 삭제 자식 테이블을 먼저 삭제해줘야 한다는 규칙 삭제를 몰아서 순서를 거꾸로 위쪽에 생성을 아래쪽에 
 DROP TABLE ORDER_TBL;
 DROP TABLE PRODUCT_TBL;
@@ -40,7 +54,7 @@ CREATE TABLE   ORDER_TBL (
     PROD_NO    NUMBER,  
     ORDER_DATE DATE,
     CONSTRAINT PK_ORDER PRIMARY KEY(ORDER_NO), 
-    CONSTRAINT FK_ORDER_PROD FOREIGN KEY(PROD_NO) REFERENCES PRODUCT_TBL(PROD_NO) --FK이름은 테이블간의 관계로 이름을 짓는다
+    CONSTRAINT FK_ORDER_PROD FOREIGN KEY(PROD_NO) REFERENCES PRODUCT_TBL(PROD_NO) ON DELETE CASCADE --FK이름은 테이블간의 관계로 이름을 짓는다
 );  
 
 
@@ -57,6 +71,8 @@ CREATE TABLE   ORDER_TBL (
 --테이블의 구조를 확인하는 쿼리문 (설명)
 --DESCRIBE ALL_CONSTRAINTS;
 --SELECT * FROM ALL_CONSTRAINTS WHERE CONSTRAINT_NAME LIKE 'PK%';
+
+
 
 
 
