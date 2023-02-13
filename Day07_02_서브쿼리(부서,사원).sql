@@ -31,12 +31,12 @@
 /* WHERE절의 서브쿼리*/
 
 
---1. 사원번호가 10001인 사원과 동일한 직급(POSITION)을 가진 사원을 조회하시오.
+--1. 사원번호가 1001인 사원과 동일한 직급(POSITION)을 가진 사원을 조회하시오.
 /*
 SELECT 사원정보
   FROM 사원테이블
  WHERE 직급 = (사원번호가 1001인 사원의 직급)
- */
+*/
  
 SELECT EMP_NO, NAME, DEPART, GENDER, POSITION, HIRE_DATE, SALARY
   FROM EMPLOYEE_TBL
@@ -151,25 +151,133 @@ SELECT EMP_NO, NAME, DEPART, GENDER, POSITION, HIRE_DATE, SALARY
  WHERE SALARY > (SELECT MAX(SALARY)
                    FROM EMPLOYEE_TBL 
                   WHERE DEPART IN (SELECT DEPT_NO
-                                    FROM DEPARTMENT_TBL
-                                   WHERE DEPT_NAME = '영업부')); 
+                                     FROM DEPARTMENT_TBL
+                                    WHERE DEPT_NAME = '영업부')); 
                                   
---참고 . 서브쿼리를 조인으로 풀기
+--참고. 서브쿼리를 조인으로 풀기
 SELECT EMP_NO, NAME, DEPART, GENDER, POSITION, HIRE_DATE, SALARY
   FROM EMPLOYEE_TBL     
  WHERE SALARY > (SELECT MAX(E.SALARY)
                    FROM DEPARTMENT_TBL D INNER JOIN EMPLOYEE_TBL E 
                      ON D.DEPT_NO = E.DEPART
-                  WHERE D.DEPT_NAME = '영업부');  
-                   
-  
-                           
-                           
-/*SELECT절의 서브쿼리*/
-SELECT 
-  FROM 
-  
+                  WHERE D.DEPT_NAME = '영업부');                          
 
 /*FROM절의 서브쿼리*/
-    
-    
+  
+/*
+    인라인 뷰(Inline View)
+    1. 쿼리문에 포함된 뷰(가상 테이블)이다.
+    2. FROM절에 포함되는 서브쿼리를 의미한다.
+    3. 단일 행/다중 행 개념이 필요 없다.
+    4. 인라인 뷰에 포함된 칼럼만 메인쿼리에서 사용할 수 있다.
+    5. 인라인 뷰를 이용해서 SELECT문의 실행 순서를 조정할 수 있다.    
+*/
+
+/*
+    가상 칼럼
+    1. PSEUDO COLUMN (P는 묵음)
+    2. 존재하지만 저장되어 있지 않은 칼럼을 의미한다.
+    3. 사용할 수 있지만 일부 사용에 제약이 있다.
+    4. 종류
+        1) ROWID  : 행(ROW) 아이디, 어떤 행이 어디에 저장되어 있는지 알고 있는 칼럼(물리적 저장 위치), 빠르게 검색할 수 있는 장점이 있다(주소위치를 알고있기 때문에)
+        2) ROWNUM : 행(ROW) 번호, 어떤 행의 순번
+*/
+
+--ROWID
+SELECT ROWID, EMP_NO, NAME
+  FROM EMPLOYEE_TBL;
+  
+--오라클의 빠른 검색은 ROWID를 이용한 검색이다.
+--실무에선 사용이 불가능하기 때문에 대신 인덱스(INDEX)를 활용한다
+SELECT EMP_NO, NAME
+  FROM EMPLOYEE_TBL
+ WHERE ROWID = 'AAAE+oAABAAALDBAAA';
+ 
+/*
+    ROWNUM의 제약 사항
+    1. ROWNUM이 1을 포함하는 범위를 조건으로 사용할 수 있다.
+    2. ROWNUM이 1을 포함하지 않는 범위는 조건으로 사용할 수 없다.
+    3. 모든 ROWNUM을 사용할려면 ROWNUM에 별명을 지정하고 그 별명을 사용하면 된다.
+*/
+
+SELECT EMP_NO, NAME
+  FROM EMPLOYEE_TBL
+ WHERE ROWNUM = 1; --ROWNUM이 1을 포함한 범위가 사용되므로 가능! 
+ 
+ SELECT EMP_NO, NAME
+  FROM EMPLOYEE_TBL
+ WHERE ROWNUM <= 2; --ROWNUM이 1을 포함한 범위가 사용되므로 가능!
+
+SELECT EMP_NO, NAME
+  FROM EMPLOYEE_TBL
+ WHERE ROWNUM = 2; --ROWNUM이 1을 포함한 범위가 아니므로 불가능!
+ 
+SELECT ROWNUM AS RN, EMP_NO, NAME
+  FROM EMPLOYEE_TBL
+ WHERE RN = 2;  --실행 순서가 맞지 않기 때문에 실행이 불가능하다.(별명을 사용할수 있다.)
+                --별명 지정을 WHERE절보다 먼저 처리하면 해결된다.
+        
+                
+SELECT E.EMP_NO, E.NAME
+  FROM (SELECT ROWNUM AS RN, EMP_NO, NAME
+          FROM EMPLOYEE_TBL) E
+ WHERE E.RN = 2;         
+
+--1. 연봉이 2번째로 높은 사원을 조회하시오.
+--  1) 연봉순으로 정렬한다.
+--  2) 정렬 결과에 행 번호(ROWNUM)을 붙인다.
+--  3) 원하는 행 번호를 조회한다.
+
+--1. ROWNUM 칼럼 사용하기
+SELECT E.EMP_NO, E.NAME, E.DEPART, E.GENDER, E.POSITION, E.HIRE_DATE, E.SALARY
+  FROM (SELECT ROWNUM AS RN, A.EMP_NO, A.NAME, A.DEPART, A.GENDER, A.POSITION, A.HIRE_DATE, A.SALARY
+          FROM (SELECT EMP_NO, NAME, DEPART, GENDER, POSITION, HIRE_DATE, SALARY
+                  FROM EMPLOYEE_TBL
+                 ORDER BY SALARY DESC) A) E
+ WHERE E.RN = 1;        
+
+--1-2. ROW_NUMBER() 함수 사용하기
+SELECT E.EMP_NO, E.NAME, E.DEPART, E.GENDER, E.POSITION, E.HIRE_DATE, E.SALARY
+  FROM (SELECT ROW_NUMBER() OVER(ORDER BY SALARY DESC) AS RN, EMP_NO, NAME, DEPART, GENDER, POSITION, HIRE_DATE, SALARY
+         FROM EMPLOYEE_TBL) E
+ WHERE E.RN = 3; 
+
+--2. 3 ~ 4 번째로 입사한 사원을 조회하시오.
+SELECT E.EMP_NO, E.NAME, E.DEPART, E.GENDER, E.POSITION, E.HIRE_DATE, E.SALARY
+  FROM (SELECT ROWNUM AS RN, A.EMP_NO, A.NAME, A.DEPART, A.GENDER, A.POSITION, A.HIRE_DATE, A.SALARY
+          FROM (SELECT EMP_NO, NAME, DEPART, GENDER, POSITION, HIRE_DATE, SALARY
+                  FROM EMPLOYEE_TBL
+                 ORDER BY HIRE_DATE ASC) A) E
+ WHERE E.RN BETWEEN 3 AND 4;    
+ 
+--2-2 ROW_NUMBER() 함수 사용하기 
+SELECT E.EMP_NO, E.NAME, E.DEPART, E.GENDER, E.POSITION, E.HIRE_DATE, E.SALARY
+  FROM (SELECT ROW_NUMBER() OVER(ORDER BY HIRE_DATE ASC) AS RN, EMP_NO, NAME, DEPART, GENDER, POSITION, HIRE_DATE, SALARY
+         FROM EMPLOYEE_TBL) E
+ WHERE E.RN BETWEEN 3 AND 4; 
+ 
+/*SELECT절의 서브쿼리*/ 
+
+/*
+    스칼라 서브쿼리
+    1. SELECT절에서 하나의 값을 반환하는 서브쿼리이다.
+    2. 일치하지 않는 정보는 NULL값을 반환한다.
+    3. 유사한 방식의 조인 방식은 외부조인이다.
+*/
+
+-- 부서 번호가 1인 부서에 근무하는 사원번호, 사원명, 부서번호, 부서명을 조회하시오.
+SELECT
+        E.EMP_NO
+      , E.NAME
+      , E.DEPART
+      , (SELECT D.DEPT_NAME
+           FROM DEPARTMENT_TBL D
+          WHERE D.DEPT_NO = E.DEPART  
+            AND D.DEPT_NO = 1) 
+  FROM    
+        EMPLOYEE_TBL E ;
+        
+SELECT E.EMP_NO, E.NAME, E.DEPART, D.DEPT_NAME
+  FROM DEPARTMENT_TBL D LEFT OUTER JOIN EMPLOYEE_TBL E
+    ON D.DEPT_NO = E.DEPART AND D.DEPT_NO = 1;
+        
