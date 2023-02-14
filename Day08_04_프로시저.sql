@@ -31,7 +31,7 @@ EXECUTE PROC1();
 -- 프로시저2 정의(만들기) : 사원번호가 100인 사원의 FIRST_NAME, LAST_NAME, SALARY를 조회하는 프로시저
 CREATE OR REPLACE PROCEDURE PROC2
 IS
-    FNAME EMPLOYEES.FIRST_NAME%TYPE;
+    FNAME EMPLOYEES.FIRST_NAME%TYPE; 
     LNAME EMPLOYEES.LAST_NAME%TYPE;
     SAL EMPLOYEES.SALARY%TYPE;
 BEGIN
@@ -43,6 +43,7 @@ BEGIN
 END;
 
 -- 프로시저2 호출(실행하기)
+
 EXECUTE PROC2();
 
 
@@ -132,5 +133,107 @@ END;
 
 /*
     프로시저 연습
-    
+    1. BUY_PROC 프로시저 구현하기
+    2. 처리할 일 
+        1) 구매내역 테이블 구매 내역을 추가(INSERT)한다.
+        2) 제품 테이블의 재고 내역을 수정(UPDATE)한다.
+        3) 고객 테이블의 포인트를 수정(UPDATE)한다.        
 */
+
+--테이블 삭제하기
+DROP TABLE BUY_TBL;
+DROP TABLE CUST_TBL;
+DROP TABLE PROD_TBL;
+
+--시퀀스 삭제하기
+DROP SEQUENCE BUY_SEQ;
+
+--제품 테이블 구성하기
+CREATE TABLE PROD_TBL (
+    /*여기다 뭐 쓴데*/P_CODE NUMBER NOT NULL,
+    /* */P_NAME VARCHAR2(20 BYTE),
+    /* */P_PRICE NUMBER,
+    /* */P_STOCK NUMBER
+);
+ALTER TABLE PROD_TBL
+    ADD CONSTRAINT PK_PROD PRIMARY KEY(P_CODE);
+INSERT INTO PROD_TBL(P_CODE, P_NAME, P_PRICE, P_STOCK) VALUES(1000, '홈런볼', 1000, 100);    
+INSERT INTO PROD_TBL(P_CODE, P_NAME, P_PRICE, P_STOCK) VALUES(1001, '맛동산', 2000, 100);   
+COMMIT;
+
+--고객 테이블 구성하기
+CREATE TABLE CUST_TBL (
+    C_NO NUMBER NOT NULL,
+    C_NAME VARCHAR2(20 BYTE), 
+    C_POINT NUMBER
+);
+ALTER TABLE CUST_TBL
+    ADD CONSTRAINT PK_CUST PRIMARY KEY(C_NO);
+INSERT INTO CUST_TBL(C_NO, C_NAME, C_POINT) VALUES(1, '정숙', 0);
+INSERT INTO CUST_TBL(C_NO, C_NAME, C_POINT) VALUES(2, '재홍', 0);
+COMMIT;
+
+--구매 테이블 구성하기
+CREATE TABLE BUY_TBL (
+    B_NO NUMBER NOT NULL,
+    C_NO NUMBER NOT NULL,
+    P_CODE NUMBER,
+    B_AMOUNT NUMBER
+);
+ALTER TABLE BUY_TBL 
+    ADD CONSTRAINT PK_BUY PRIMARY KEY(B_NO);
+ALTER TABLE BUY_TBL
+    ADD CONSTRAINT FK_BUY_CUST FOREIGN KEY(C_NO)
+        REFERENCES CUST_TBL(C_NO)
+            ON DELETE CASCADE;
+ALTER TABLE BUY_TBL
+    ADD CONSTRAINT FK_BUY_PROD FOREIGN KEY(P_CODE)
+        REFERENCES PROD_TBL(P_CODE)
+            ON DELETE SET NULL;
+CREATE SEQUENCE BUY_SEQ 
+    NOCACHE;
+    
+--BUY_PROC 프로시저 정의
+CREATE OR REPLACE PROCEDURE BUY_PROC
+(
+  /*고객번호*/   CNO IN CUST_TBL.C_NO%TYPE, --(IN)정보를 받아들이는 파라미터, CUST_TBL의 C_NO을 CNO 이름으로 넣어라 
+  /*제품코드*/  PCODE IN PROD_TBL.P_CODE%TYPE,
+  /*구매수량*/ BUY_AMOUNT IN BUY_TBL.B_AMOUNT%TYPE
+) --'누가' 무슨 제품을 '몇개' 샀다
+IS      --IS뒤에 변수를 쓰면 된다      
+BEGIN --추가변수 없으면 BEGIN으로 가면 된다.
+     --1) 구매내역 테이블 구매 내역을 추가(INSERT)한다.      
+     INSERT INTO BUY_TBL(B_NO, C_NO, P_CODE, B_AMOUNT) VALUES(BUY_SEQ.NEXTVAL, CNO, PCODE, BUY_AMOUNT);  
+     
+     --2) 제품 테이블의 재고 내역을 수정(UPDATE)한다.
+     UPDATE PROD_TBL SET P_STOCK = P_STOCK - BUY_AMOUNT WHERE P_CODE = PCODE;
+     
+     --3) 고객 테이블의 포인트를 수정(UPDATE)한다.   
+     --     총 구매액의 10%를 정수로 올림처리해서 포인트로 준다.
+     --CEIL(가격 * 구매수량 * 0.1), 이게 포인트
+   UPDATE CUST_TBL SET C_POINT = C_POINT + CEIL((SELECT P_PRICE FROM PROD_TBL WHERE P_CODE = PCODE) * BUY_AMOUNT * 0.1) WHERE C_NO = CNO;
+     
+     --4) 커밋
+     COMMIT;
+    
+EXCEPTION
+
+    WHEN OTHERS THEN -- 모든 예외를 처리
+    
+        -- 예외 사유 확인
+         DBMS_OUTPUT.PUT_LINE(SQLCODE || '(' || SQLERRM || ')');
+        
+        --롤백
+        ROLLBACK;
+        
+END;
+
+--BUY_PROC 프로시저 호출(메소드 부르듯이)
+
+EXECUTE BUY_PROC(1, 1000, 10); --고객번호1, 제품코드 1, 구매수량 10
+
+BEGIN
+    BUY_PROC(2, 1001, 5); --고객번호 2, 제품코드 1001, 구매수량 5
+END;    
+        
+    
