@@ -1,5 +1,5 @@
 /*
-    트리거(TRIGGER)
+    트리거(TRIGGER) (메이플 자동스킬 같은 느낌)
     1. DML(INSERT, UPDATE, DELETE) 작업 후 자동으로 실행되는 데이터베이스 객체이다.
     2. 행(ROW) 단위로 트리거가 동작한다.
     3. 종류
@@ -10,7 +10,7 @@
         BEFORE | AFTER 
         INSERT OR UPDATE OR DELETE
         ON 테이블명
-        FOR EACH ROW
+        FOR EACH ROW --행단위로 트리거가 동작한다.
         BEGIN
             트리거본문
         END;        
@@ -23,7 +23,7 @@ CREATE OR REPLACE TRIGGER TRIG1
     AFTER 
     UPDATE 
     ON EMPLOYEES
-    FOR EACH ROW  --행단위로 트리거가 동작한다.
+    FOR EACH ROW  
 BEGIN
     DBMS_OUTPUT.PUT_LINE('HELLO WORLD');
 END;

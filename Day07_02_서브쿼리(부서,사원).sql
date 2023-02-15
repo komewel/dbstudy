@@ -221,7 +221,7 @@ SELECT ROWNUM AS RN, EMP_NO, NAME
 SELECT E.EMP_NO, E.NAME
   FROM (SELECT ROWNUM AS RN, EMP_NO, NAME
           FROM EMPLOYEE_TBL) E
- WHERE E.RN = 2;         
+ WHERE E.RN BETWEEN 2 AND 3;         
 
 --1. 연봉이 2번째로 높은 사원을 조회하시오.
 --  1) 연봉순으로 정렬한다.
